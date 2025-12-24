@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { AuthGuard } from "@/components/AuthGuard";
 
 export const metadata: Metadata = {
   title: "Gestão de Marcenaria",
@@ -13,7 +14,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className="gm-bg">{children}</body>
+      <body className="gm-bg">
+        <AuthGuard>{children}</AuthGuard>
+      </body>
     </html>
   );
 }

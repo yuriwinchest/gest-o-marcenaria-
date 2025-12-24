@@ -64,3 +64,34 @@ export interface NotaFiscal {
   createdAt: string;
 }
 
+export interface Tenant {
+  id: string;
+  nome: string;
+  createdAt: string;
+}
+
+export type TipoPessoa = 'pf' | 'pj';
+
+export interface Cliente {
+  id: string;
+  nome: string;
+  tipoPessoa: TipoPessoa;
+  razaoSocial?: string;
+  nomeFantasia?: string;
+  cpfCnpj?: string;
+  inscricaoEstadual?: string;
+  inscricaoMunicipal?: string;
+  email?: string;
+  telefone?: string;
+  cep?: string;
+  logradouro?: string;
+  numero?: string;
+  complemento?: string;
+  bairro?: string;
+  cidade?: string;
+  uf?: string;
+  pais?: string;
+  observacoes?: string;
+  createdAt: string;
+}
+
