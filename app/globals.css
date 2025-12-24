@@ -8,8 +8,8 @@
   --card: rgba(18, 10, 28, 0.78);
   --card-border: rgba(255, 255, 255, 0.10);
   --muted: rgba(245, 243, 255, 0.75);
-  --input: rgba(255, 255, 255, 0.08);
-  --input-border: rgba(255, 255, 255, 0.16);
+  --input: rgba(255, 255, 255, 0.92);
+  --input-border: rgba(17, 24, 39, 0.18);
   --focus: rgba(168, 85, 247, 0.6); /* roxo */
 }
 
@@ -52,15 +52,22 @@ body {
 .gm-input, .gm-select, .gm-textarea {
   background: var(--input);
   border: 1px solid var(--input-border);
-  color: var(--foreground);
+  color: #111827; /* preto (Tailwind gray-900) */
+  color-scheme: light; /* garante dropdown/calendário legíveis */
 }
 .gm-input::placeholder, .gm-textarea::placeholder {
-  color: rgba(245, 243, 255, 0.55);
+  color: rgba(17, 24, 39, 0.55);
 }
 .gm-input:focus, .gm-select:focus, .gm-textarea:focus {
   outline: none;
   box-shadow: 0 0 0 4px var(--focus);
   border-color: rgba(168, 85, 247, 0.75);
+}
+
+/* Select options: força preto no branco quando abrir a lista */
+.gm-select option {
+  color: #111827;
+  background: #ffffff;
 }
 
 /* Tabelas */
