@@ -18,20 +18,20 @@ export default function RegistroPage() {
     setErro(null);
     setLoading(true);
     try {
-      const supabase = getSupabaseBrowser();
-      const { data, error } = await supabase.auth.signUp({ email, password: senha });
-      if (error) throw error;
+      // Registro server-side para NÃO depender de e-mail de confirmação (SMTP).
+      const res = await fetch('/api/auth/registro', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nomeTenant, email, senha }),
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error || 'Falha ao criar conta');
 
-      // Se a instância exigir confirmação de e-mail, ainda assim podemos tentar onboarding após login.
-      // Se já estiver autenticado, cria tenant e vínculo via RPC.
-      const session = data.session;
-      if (session) {
-        const { error: rpcError } = await supabase.rpc('gestao_marcenaria_onboard_tenant', { nome_tenant: nomeTenant });
-        if (rpcError) throw rpcError;
-        router.replace('/');
-      } else {
-        router.replace('/login');
-      }
+      // Faz login normal (client) e entra no sistema.
+      const supabase = getSupabaseBrowser();
+      const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
+      if (error) throw error;
+      router.replace('/');
     } catch (err: any) {
       setErro(err?.message ?? 'Falha ao criar conta');
     } finally {
