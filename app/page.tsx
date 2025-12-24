@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { LayoutDashboard, DollarSign, FileText, TrendingUp, ClipboardList, Receipt } from 'lucide-react';
+import { Users } from 'lucide-react';
 
 export default function Home() {
   const menuItems = [
@@ -39,6 +40,13 @@ export default function Home() {
       href: '/notas-fiscais',
       icon: Receipt,
       color: 'bg-orange-500',
+    },
+    {
+      title: 'Clientes',
+      description: 'Cadastro de clientes e empresas',
+      href: '/clientes',
+      icon: Users,
+      color: 'bg-fuchsia-500',
     },
     {
       title: 'Relatórios',
