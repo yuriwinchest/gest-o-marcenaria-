@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getSupabaseBrowser } from '@/lib/supabase/browser';
+import { AuthSidePanel } from '@/components/AuthSidePanel';
 
 export default function RegistroPage() {
   const router = useRouter();
@@ -40,35 +41,39 @@ export default function RegistroPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="gm-surface rounded-xl p-6 w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-1">Criar conta</h1>
-        <p className="gm-text-muted mb-6">Crie seu ambiente (tenant) e acesse o sistema</p>
+    <div className="min-h-screen flex items-center justify-center px-4 py-10">
+      <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+        <div className="gm-surface rounded-2xl p-6">
+          <h1 className="text-2xl font-bold mb-1">Criar conta</h1>
+          <p className="gm-text-muted mb-6">Crie seu ambiente (tenant) e acesse o sistema</p>
 
-        <form onSubmit={onSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium gm-text-muted mb-1">Nome da empresa / ambiente</label>
-            <input className="gm-input w-full rounded-lg px-3 py-2" value={nomeTenant} onChange={(e) => setNomeTenant(e.target.value)} required />
+          <form onSubmit={onSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium gm-text-muted mb-1">Nome da empresa / ambiente</label>
+              <input className="gm-input w-full rounded-lg px-3 py-2" value={nomeTenant} onChange={(e) => setNomeTenant(e.target.value)} required />
+            </div>
+            <div>
+              <label className="block text-sm font-medium gm-text-muted mb-1">E-mail</label>
+              <input className="gm-input w-full rounded-lg px-3 py-2" value={email} onChange={(e) => setEmail(e.target.value)} type="email" required />
+            </div>
+            <div>
+              <label className="block text-sm font-medium gm-text-muted mb-1">Senha</label>
+              <input className="gm-input w-full rounded-lg px-3 py-2" value={senha} onChange={(e) => setSenha(e.target.value)} type="password" required />
+            </div>
+
+            {erro && <div className="text-red-300 text-sm">{erro}</div>}
+
+            <button disabled={loading} className="w-full bg-violet-600 hover:bg-violet-700 text-white rounded-lg py-2 font-medium">
+              {loading ? 'Criando...' : 'Criar conta'}
+            </button>
+          </form>
+
+          <div className="mt-4 text-sm gm-text-muted">
+            Já tem conta? <Link className="text-violet-200 hover:text-violet-100 underline" href="/login">Entrar</Link>
           </div>
-          <div>
-            <label className="block text-sm font-medium gm-text-muted mb-1">E-mail</label>
-            <input className="gm-input w-full rounded-lg px-3 py-2" value={email} onChange={(e) => setEmail(e.target.value)} type="email" required />
-          </div>
-          <div>
-            <label className="block text-sm font-medium gm-text-muted mb-1">Senha</label>
-            <input className="gm-input w-full rounded-lg px-3 py-2" value={senha} onChange={(e) => setSenha(e.target.value)} type="password" required />
-          </div>
-
-          {erro && <div className="text-red-300 text-sm">{erro}</div>}
-
-          <button disabled={loading} className="w-full bg-violet-600 hover:bg-violet-700 text-white rounded-lg py-2 font-medium">
-            {loading ? 'Criando...' : 'Criar conta'}
-          </button>
-        </form>
-
-        <div className="mt-4 text-sm gm-text-muted">
-          Já tem conta? <Link className="text-violet-200 hover:text-violet-100 underline" href="/login">Entrar</Link>
         </div>
+
+        <AuthSidePanel />
       </div>
     </div>
   );
