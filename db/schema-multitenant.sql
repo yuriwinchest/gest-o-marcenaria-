@@ -111,6 +111,56 @@ create index if not exists idx_gm_clientes_tenant on public."gestao_marcenaria__
 create index if not exists idx_gm_clientes_nome on public."gestao_marcenaria__clientes"(nome);
 
 -- ==========================================================
+-- 3.1) Usuários (perfil no schema public)
+-- ==========================================================
+create table if not exists public."gestao_marcenaria__usuarios" (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  email text,
+  nome text,
+  telefone text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+comment on table public."gestao_marcenaria__usuarios" is 'Gestão de Marcenaria - Usuários (perfil)';
+
+-- Atualiza updated_at automaticamente
+create or replace function public.gestao_marcenaria_set_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists gm_set_updated_at_usuarios on public."gestao_marcenaria__usuarios";
+create trigger gm_set_updated_at_usuarios
+before update on public."gestao_marcenaria__usuarios"
+for each row execute function public.gestao_marcenaria_set_updated_at();
+
+-- Cria perfil automaticamente quando um usuário é criado no auth.users
+create or replace function public.gestao_marcenaria_handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+begin
+  insert into public."gestao_marcenaria__usuarios"(user_id, email)
+  values (new.id, new.email)
+  on conflict (user_id) do update set email = excluded.email;
+  return new;
+end;
+$$;
+
+drop trigger if exists gm_on_auth_user_created on auth.users;
+create trigger gm_on_auth_user_created
+after insert on auth.users
+for each row execute function public.gestao_marcenaria_handle_new_user();
+
+-- ==========================================================
 -- 4) RLS (Row Level Security) - multi-tenant
 -- ==========================================================
 -- Helper: usuário pertence ao tenant?
@@ -136,6 +186,7 @@ alter table public."gestao_marcenaria__contas_a_pagar" enable row level security
 alter table public."gestao_marcenaria__contas_a_receber" enable row level security;
 alter table public."gestao_marcenaria__notas_fiscais" enable row level security;
 alter table public."gestao_marcenaria__clientes" enable row level security;
+alter table public."gestao_marcenaria__usuarios" enable row level security;
 
 -- TENANTS: só enxerga tenants em que é membro
 drop policy if exists gm_tenants_select on public."gestao_marcenaria__tenants";
@@ -252,6 +303,20 @@ on public."gestao_marcenaria__clientes"
 for all to authenticated
 using (public.gestao_marcenaria_user_in_tenant(tenant_id))
 with check (public.gestao_marcenaria_user_in_tenant(tenant_id));
+
+-- Usuários (perfil): cada usuário vê/edita somente o próprio perfil
+drop policy if exists gm_usuarios_select on public."gestao_marcenaria__usuarios";
+create policy gm_usuarios_select
+on public."gestao_marcenaria__usuarios"
+for select to authenticated
+using (user_id = auth.uid());
+
+drop policy if exists gm_usuarios_update on public."gestao_marcenaria__usuarios";
+create policy gm_usuarios_update
+on public."gestao_marcenaria__usuarios"
+for update to authenticated
+using (user_id = auth.uid())
+with check (user_id = auth.uid());
 
 -- ==========================================================
 -- 5) Migração de dados existentes (opcional)

@@ -6,10 +6,12 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const nomeTenant = String(body?.nomeTenant ?? '').trim();
+    const nomeUsuario = String(body?.nomeUsuario ?? '').trim();
     const email = String(body?.email ?? '').trim();
     const password = String(body?.senha ?? '');
 
     if (!nomeTenant) return jsonError('Informe o nome da empresa/ambiente');
+    if (!nomeUsuario) return jsonError('Informe seu nome');
     if (!email) return jsonError('Informe o e-mail');
     if (!password || password.length < 6) return jsonError('Senha deve ter pelo menos 6 caracteres');
 
@@ -24,6 +26,14 @@ export async function POST(req: Request) {
     if (createErr) return jsonError(createErr.message, 400);
     const userId = created.user?.id;
     if (!userId) return jsonError('Falha ao criar usuário', 500);
+
+    // Perfil do usuário (tabela do sistema)
+    const { error: perfilErr } = await supabase.from(TABLES.usuarios).upsert({
+      user_id: userId,
+      email,
+      nome: nomeUsuario,
+    });
+    if (perfilErr) return jsonError(perfilErr.message, 500);
 
     // Cria tenant + vínculo (service role ignora RLS, então funciona mesmo antes do usuário logar)
     const { data: tenant, error: tenantErr } = await supabase

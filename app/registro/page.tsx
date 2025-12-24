@@ -9,6 +9,7 @@ import { AuthSidePanel } from '@/components/AuthSidePanel';
 export default function RegistroPage() {
   const router = useRouter();
   const [nomeTenant, setNomeTenant] = useState('');
+  const [nomeUsuario, setNomeUsuario] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState<string | null>(null);
@@ -23,7 +24,7 @@ export default function RegistroPage() {
       const res = await fetch('/api/auth/registro', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nomeTenant, email, senha }),
+        body: JSON.stringify({ nomeTenant, nomeUsuario, email, senha }),
       });
       const json = await res.json();
       if (!json.ok) throw new Error(json.error || 'Falha ao criar conta');
@@ -52,6 +53,10 @@ export default function RegistroPage() {
               <label className="block text-sm font-medium gm-text-muted mb-1">Nome da empresa / ambiente</label>
               <input className="gm-input w-full rounded-lg px-3 py-2" value={nomeTenant} onChange={(e) => setNomeTenant(e.target.value)} required />
             </div>
+          <div>
+            <label className="block text-sm font-medium gm-text-muted mb-1">Seu nome</label>
+            <input className="gm-input w-full rounded-lg px-3 py-2" value={nomeUsuario} onChange={(e) => setNomeUsuario(e.target.value)} required />
+          </div>
             <div>
               <label className="block text-sm font-medium gm-text-muted mb-1">E-mail</label>
               <input className="gm-input w-full rounded-lg px-3 py-2" value={email} onChange={(e) => setEmail(e.target.value)} type="email" required />
