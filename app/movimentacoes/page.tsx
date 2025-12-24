@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Plus, Edit, Trash2 } from 'lucide-react';
-import { storageService } from '@/lib/storage';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { Movimentacao, TipoMovimentacao } from '@/types';
+import { Movimentacao, Projeto, TipoMovimentacao } from '@/types';
 
 export default function MovimentacoesPage() {
   const [movimentacoes, setMovimentacoes] = useState<Movimentacao[]>([]);
+  const [projetos, setProjetos] = useState<Projeto[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -22,15 +22,21 @@ export default function MovimentacoesPage() {
   });
 
   useEffect(() => {
-    loadMovimentacoes();
+    loadData();
   }, []);
 
-  const loadMovimentacoes = () => {
-    const data = storageService.getMovimentacoes();
-    setMovimentacoes(data.sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime()));
+  const loadData = async () => {
+    const [movRes, projRes] = await Promise.all([
+      fetch('/api/movimentacoes', { cache: 'no-store' }),
+      fetch('/api/projetos', { cache: 'no-store' }),
+    ]);
+    const movJson = await movRes.json();
+    const projJson = await projRes.json();
+    if (movJson.ok) setMovimentacoes(movJson.data);
+    if (projJson.ok) setProjetos(projJson.data);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const movimentacao: Movimentacao = {
       id: editingId || crypto.randomUUID(),
@@ -41,17 +47,25 @@ export default function MovimentacoesPage() {
       categoria: formData.categoria,
       projetoId: formData.projetoId || undefined,
       observacoes: formData.observacoes || undefined,
-      createdAt: editingId ? movimentacoes.find(m => m.id === editingId)?.createdAt || new Date().toISOString() : new Date().toISOString(),
+      createdAt: new Date().toISOString(),
     };
 
     if (editingId) {
-      storageService.updateMovimentacao(editingId, movimentacao);
+      await fetch(`/api/movimentacoes/${editingId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(movimentacao),
+      });
     } else {
-      storageService.saveMovimentacao(movimentacao);
+      await fetch('/api/movimentacoes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(movimentacao),
+      });
     }
 
     resetForm();
-    loadMovimentacoes();
+    await loadData();
   };
 
   const handleEdit = (movimentacao: Movimentacao) => {
@@ -68,10 +82,10 @@ export default function MovimentacoesPage() {
     setShowForm(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Tem certeza que deseja excluir esta movimentação?')) {
-      storageService.deleteMovimentacao(id);
-      loadMovimentacoes();
+      await fetch(`/api/movimentacoes/${id}`, { method: 'DELETE' });
+      await loadData();
     }
   };
 
@@ -88,8 +102,6 @@ export default function MovimentacoesPage() {
     setEditingId(null);
     setShowForm(false);
   };
-
-  const projetos = storageService.getProjetos();
 
   return (
     <div className="min-h-screen bg-gray-50">

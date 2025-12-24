@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Plus, Edit, Trash2, Check } from 'lucide-react';
-import { storageService } from '@/lib/storage';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { ContaReceber, StatusConta } from '@/types';
+import { ContaReceber, Projeto, StatusConta } from '@/types';
 
 export default function ContasReceberPage() {
   const [contas, setContas] = useState<ContaReceber[]>([]);
+  const [projetos, setProjetos] = useState<Projeto[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -22,37 +22,53 @@ export default function ContasReceberPage() {
   });
 
   useEffect(() => {
-    loadContas();
+    loadData();
   }, []);
 
-  const loadContas = () => {
-    const data = storageService.getContasReceber();
-    setContas(data.sort((a, b) => new Date(a.dataVencimento).getTime() - new Date(b.dataVencimento).getTime()));
+  const loadData = async () => {
+    const [contasRes, projetosRes] = await Promise.all([
+      fetch('/api/contas-receber', { cache: 'no-store' }),
+      fetch('/api/projetos', { cache: 'no-store' }),
+    ]);
+    const contasJson = await contasRes.json();
+    const projetosJson = await projetosRes.json();
+    if (contasJson.ok) setContas(contasJson.data);
+    if (projetosJson.ok) setProjetos(projetosJson.data);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const existing = editingId ? contas.find(c => c.id === editingId) : undefined;
     const conta: ContaReceber = {
       id: editingId || crypto.randomUUID(),
       descricao: formData.descricao,
       valor: parseFloat(formData.valor),
       dataVencimento: formData.dataVencimento,
-      status: 'pendente',
+      status: existing?.status ?? 'pendente',
+      dataRecebimento: existing?.dataRecebimento,
       cliente: formData.cliente,
       categoria: formData.categoria,
       projetoId: formData.projetoId || undefined,
       observacoes: formData.observacoes || undefined,
-      createdAt: editingId ? contas.find(c => c.id === editingId)?.createdAt || new Date().toISOString() : new Date().toISOString(),
+      createdAt: new Date().toISOString(),
     };
 
     if (editingId) {
-      storageService.updateContaReceber(editingId, conta);
+      await fetch(`/api/contas-receber/${editingId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(conta),
+      });
     } else {
-      storageService.saveContaReceber(conta);
+      await fetch('/api/contas-receber', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(conta),
+      });
     }
 
     resetForm();
-    loadContas();
+    await loadData();
   };
 
   const handleEdit = (conta: ContaReceber) => {
@@ -69,21 +85,27 @@ export default function ContasReceberPage() {
     setShowForm(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Tem certeza que deseja excluir esta conta?')) {
-      storageService.deleteContaReceber(id);
-      loadContas();
+      await fetch(`/api/contas-receber/${id}`, { method: 'DELETE' });
+      await loadData();
     }
   };
 
-  const handleMarcarRecebida = (id: string) => {
+  const handleMarcarRecebida = async (id: string) => {
     const conta = contas.find(c => c.id === id);
     if (conta) {
-      storageService.updateContaReceber(id, {
+      const updated: ContaReceber = {
+        ...conta,
         status: 'recebida',
         dataRecebimento: new Date().toISOString().split('T')[0],
+      };
+      await fetch(`/api/contas-receber/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated),
       });
-      loadContas();
+      await loadData();
     }
   };
 
@@ -101,7 +123,6 @@ export default function ContasReceberPage() {
     setShowForm(false);
   };
 
-  const projetos = storageService.getProjetos();
   const getStatusColor = (status: StatusConta, dataVencimento: string) => {
     if (status === 'recebida') return 'bg-green-100 text-green-800';
     if (status === 'vencida') return 'bg-red-100 text-red-800';

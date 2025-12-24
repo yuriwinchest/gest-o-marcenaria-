@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Plus, Edit, Trash2 } from 'lucide-react';
-import { storageService } from '@/lib/storage';
 import { formatDate } from '@/lib/utils';
 import { Projeto } from '@/types';
 
@@ -23,12 +22,13 @@ export default function ProjetosPage() {
     loadProjetos();
   }, []);
 
-  const loadProjetos = () => {
-    const data = storageService.getProjetos();
-    setProjetos(data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+  const loadProjetos = async () => {
+    const res = await fetch('/api/projetos', { cache: 'no-store' });
+    const json = await res.json();
+    if (json.ok) setProjetos(json.data);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const projeto: Projeto = {
       id: editingId || crypto.randomUUID(),
@@ -37,17 +37,25 @@ export default function ProjetosPage() {
       dataInicio: formData.dataInicio,
       dataFim: formData.dataFim || undefined,
       status: formData.status,
-      createdAt: editingId ? projetos.find(p => p.id === editingId)?.createdAt || new Date().toISOString() : new Date().toISOString(),
+      createdAt: new Date().toISOString(),
     };
 
     if (editingId) {
-      storageService.updateProjeto(editingId, projeto);
+      await fetch(`/api/projetos/${editingId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(projeto),
+      });
     } else {
-      storageService.saveProjeto(projeto);
+      await fetch('/api/projetos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(projeto),
+      });
     }
 
     resetForm();
-    loadProjetos();
+    await loadProjetos();
   };
 
   const handleEdit = (projeto: Projeto) => {
@@ -62,10 +70,10 @@ export default function ProjetosPage() {
     setShowForm(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Tem certeza que deseja excluir este projeto?')) {
-      storageService.deleteProjeto(id);
-      loadProjetos();
+      await fetch(`/api/projetos/${id}`, { method: 'DELETE' });
+      await loadProjetos();
     }
   };
 

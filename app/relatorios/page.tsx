@@ -3,19 +3,41 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, TrendingUp, TrendingDown, DollarSign, FileText } from 'lucide-react';
-import { storageService } from '@/lib/storage';
-import { formatCurrency, formatDate, calculateFluxoCaixa, calculateDRE, calculateProjetoLucro, getMonthRange } from '@/lib/utils';
+import { formatCurrency, calculateFluxoCaixa, calculateDRE, calculateProjetoLucro, getMonthRange } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale/pt-BR';
+import type { ContaPagar, ContaReceber, Movimentacao, Projeto } from '@/types';
 
 export default function RelatoriosPage() {
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
   const [selectedProjeto, setSelectedProjeto] = useState<string>('');
 
-  const movimentacoes = storageService.getMovimentacoes();
-  const contasPagar = storageService.getContasPagar();
-  const contasReceber = storageService.getContasReceber();
-  const projetos = storageService.getProjetos();
+  const [movimentacoes, setMovimentacoes] = useState<Movimentacao[]>([]);
+  const [contasPagar, setContasPagar] = useState<ContaPagar[]>([]);
+  const [contasReceber, setContasReceber] = useState<ContaReceber[]>([]);
+  const [projetos, setProjetos] = useState<Projeto[]>([]);
+
+  useEffect(() => {
+    const loadData = async () => {
+      const [mRes, cpRes, crRes, pRes] = await Promise.all([
+        fetch('/api/movimentacoes', { cache: 'no-store' }),
+        fetch('/api/contas-pagar', { cache: 'no-store' }),
+        fetch('/api/contas-receber', { cache: 'no-store' }),
+        fetch('/api/projetos', { cache: 'no-store' }),
+      ]);
+      const [mJson, cpJson, crJson, pJson] = await Promise.all([
+        mRes.json(),
+        cpRes.json(),
+        crRes.json(),
+        pRes.json(),
+      ]);
+      if (mJson.ok) setMovimentacoes(mJson.data);
+      if (cpJson.ok) setContasPagar(cpJson.data);
+      if (crJson.ok) setContasReceber(crJson.data);
+      if (pJson.ok) setProjetos(pJson.data);
+    };
+    loadData();
+  }, []);
 
   const monthDate = new Date(selectedMonth + '-01');
   const monthRange = getMonthRange(monthDate);

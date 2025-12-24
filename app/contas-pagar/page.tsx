@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Plus, Edit, Trash2, Check } from 'lucide-react';
-import { storageService } from '@/lib/storage';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { ContaPagar, StatusConta } from '@/types';
+import { ContaPagar, Projeto, StatusConta } from '@/types';
 
 export default function ContasPagarPage() {
   const [contas, setContas] = useState<ContaPagar[]>([]);
+  const [projetos, setProjetos] = useState<Projeto[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -22,37 +22,53 @@ export default function ContasPagarPage() {
   });
 
   useEffect(() => {
-    loadContas();
+    loadData();
   }, []);
 
-  const loadContas = () => {
-    const data = storageService.getContasPagar();
-    setContas(data.sort((a, b) => new Date(a.dataVencimento).getTime() - new Date(b.dataVencimento).getTime()));
+  const loadData = async () => {
+    const [contasRes, projetosRes] = await Promise.all([
+      fetch('/api/contas-pagar', { cache: 'no-store' }),
+      fetch('/api/projetos', { cache: 'no-store' }),
+    ]);
+    const contasJson = await contasRes.json();
+    const projetosJson = await projetosRes.json();
+    if (contasJson.ok) setContas(contasJson.data);
+    if (projetosJson.ok) setProjetos(projetosJson.data);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const existing = editingId ? contas.find(c => c.id === editingId) : undefined;
     const conta: ContaPagar = {
       id: editingId || crypto.randomUUID(),
       descricao: formData.descricao,
       valor: parseFloat(formData.valor),
       dataVencimento: formData.dataVencimento,
-      status: 'pendente',
+      status: existing?.status ?? 'pendente',
+      dataPagamento: existing?.dataPagamento,
       fornecedor: formData.fornecedor,
       categoria: formData.categoria,
       projetoId: formData.projetoId || undefined,
       observacoes: formData.observacoes || undefined,
-      createdAt: editingId ? contas.find(c => c.id === editingId)?.createdAt || new Date().toISOString() : new Date().toISOString(),
+      createdAt: new Date().toISOString(),
     };
 
     if (editingId) {
-      storageService.updateContaPagar(editingId, conta);
+      await fetch(`/api/contas-pagar/${editingId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(conta),
+      });
     } else {
-      storageService.saveContaPagar(conta);
+      await fetch('/api/contas-pagar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(conta),
+      });
     }
 
     resetForm();
-    loadContas();
+    await loadData();
   };
 
   const handleEdit = (conta: ContaPagar) => {
@@ -69,21 +85,27 @@ export default function ContasPagarPage() {
     setShowForm(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Tem certeza que deseja excluir esta conta?')) {
-      storageService.deleteContaPagar(id);
-      loadContas();
+      await fetch(`/api/contas-pagar/${id}`, { method: 'DELETE' });
+      await loadData();
     }
   };
 
-  const handleMarcarPaga = (id: string) => {
+  const handleMarcarPaga = async (id: string) => {
     const conta = contas.find(c => c.id === id);
     if (conta) {
-      storageService.updateContaPagar(id, {
+      const updated: ContaPagar = {
+        ...conta,
         status: 'paga',
         dataPagamento: new Date().toISOString().split('T')[0],
+      };
+      await fetch(`/api/contas-pagar/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated),
       });
-      loadContas();
+      await loadData();
     }
   };
 
@@ -101,7 +123,6 @@ export default function ContasPagarPage() {
     setShowForm(false);
   };
 
-  const projetos = storageService.getProjetos();
   const getStatusColor = (status: StatusConta, dataVencimento: string) => {
     if (status === 'paga') return 'bg-green-100 text-green-800';
     if (status === 'vencida') return 'bg-red-100 text-red-800';

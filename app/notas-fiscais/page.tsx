@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Plus, Edit, Trash2 } from 'lucide-react';
-import { storageService } from '@/lib/storage';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { NotaFiscal } from '@/types';
+import { NotaFiscal, Projeto } from '@/types';
 
 export default function NotasFiscaisPage() {
   const [notas, setNotas] = useState<NotaFiscal[]>([]);
+  const [projetos, setProjetos] = useState<Projeto[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -23,15 +23,21 @@ export default function NotasFiscaisPage() {
   });
 
   useEffect(() => {
-    loadNotas();
+    loadData();
   }, []);
 
-  const loadNotas = () => {
-    const data = storageService.getNotasFiscais();
-    setNotas(data.sort((a, b) => new Date(b.dataEmissao).getTime() - new Date(a.dataEmissao).getTime()));
+  const loadData = async () => {
+    const [notasRes, projetosRes] = await Promise.all([
+      fetch('/api/notas-fiscais', { cache: 'no-store' }),
+      fetch('/api/projetos', { cache: 'no-store' }),
+    ]);
+    const notasJson = await notasRes.json();
+    const projetosJson = await projetosRes.json();
+    if (notasJson.ok) setNotas(notasJson.data);
+    if (projetosJson.ok) setProjetos(projetosJson.data);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const nota: NotaFiscal = {
       id: editingId || crypto.randomUUID(),
@@ -43,17 +49,25 @@ export default function NotasFiscaisPage() {
       clienteFornecedor: formData.clienteFornecedor,
       projetoId: formData.projetoId || undefined,
       observacoes: formData.observacoes || undefined,
-      createdAt: editingId ? notas.find(n => n.id === editingId)?.createdAt || new Date().toISOString() : new Date().toISOString(),
+      createdAt: new Date().toISOString(),
     };
 
     if (editingId) {
-      storageService.updateNotaFiscal(editingId, nota);
+      await fetch(`/api/notas-fiscais/${editingId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nota),
+      });
     } else {
-      storageService.saveNotaFiscal(nota);
+      await fetch('/api/notas-fiscais', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nota),
+      });
     }
 
     resetForm();
-    loadNotas();
+    await loadData();
   };
 
   const handleEdit = (nota: NotaFiscal) => {
@@ -71,10 +85,10 @@ export default function NotasFiscaisPage() {
     setShowForm(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Tem certeza que deseja excluir esta nota fiscal?')) {
-      storageService.deleteNotaFiscal(id);
-      loadNotas();
+      await fetch(`/api/notas-fiscais/${id}`, { method: 'DELETE' });
+      await loadData();
     }
   };
 
@@ -92,8 +106,6 @@ export default function NotasFiscaisPage() {
     setEditingId(null);
     setShowForm(false);
   };
-
-  const projetos = storageService.getProjetos();
 
   return (
     <div className="min-h-screen bg-gray-50">
