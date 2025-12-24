@@ -5,7 +5,10 @@ import Link from 'next/link';
 import { ArrowLeft, Plus, Edit, Trash2 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Movimentacao, Projeto, TipoMovimentacao } from '@/types';
-import { fetchJson } from '@/lib/api/fetchJson';
+import { getSupabaseBrowser } from '@/lib/supabase/browser';
+import { TABLES } from '@/lib/db/tables';
+import { getTenantIdOrThrow } from '@/lib/tenant/getTenantId';
+import { mapMovimentacaoFromDb, mapMovimentacaoToDb, mapProjetoFromDb, type DbMovimentacao, type DbProjeto } from '@/lib/db/mappers';
 
 export default function MovimentacoesPage() {
   const [movimentacoes, setMovimentacoes] = useState<Movimentacao[]>([]);
@@ -27,17 +30,21 @@ export default function MovimentacoesPage() {
   }, []);
 
   const loadData = async () => {
-    const [mov, proj] = await Promise.all([
-      fetchJson<Movimentacao[]>('/api/movimentacoes', { cache: 'no-store' }),
-      fetchJson<Projeto[]>('/api/projetos', { cache: 'no-store' }),
+    const supabase = getSupabaseBrowser();
+    const [{ data: movData, error: movError }, { data: projData, error: projError }] = await Promise.all([
+      supabase.from(TABLES.movimentacoes).select('*').order('data', { ascending: false }),
+      supabase.from(TABLES.projetos).select('*').order('created_at', { ascending: false }),
     ]);
-
-    if (mov.body?.ok) setMovimentacoes(mov.body.data);
-    if (proj.body?.ok) setProjetos(proj.body.data);
+    if (movError) throw movError;
+    if (projError) throw projError;
+    setMovimentacoes(((movData ?? []) as DbMovimentacao[]).map(mapMovimentacaoFromDb));
+    setProjetos(((projData ?? []) as DbProjeto[]).map(mapProjetoFromDb));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const tenantId = await getTenantIdOrThrow();
+    const supabase = getSupabaseBrowser();
     const movimentacao: Movimentacao = {
       id: editingId || crypto.randomUUID(),
       tipo: formData.tipo,
@@ -50,18 +57,13 @@ export default function MovimentacoesPage() {
       createdAt: new Date().toISOString(),
     };
 
+    const payload = { ...mapMovimentacaoToDb(movimentacao), tenant_id: tenantId };
     if (editingId) {
-      await fetch(`/api/movimentacoes/${editingId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(movimentacao),
-      });
+      const { error } = await supabase.from(TABLES.movimentacoes).update(payload).eq('id', editingId);
+      if (error) throw error;
     } else {
-      await fetch('/api/movimentacoes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(movimentacao),
-      });
+      const { error } = await supabase.from(TABLES.movimentacoes).insert(payload);
+      if (error) throw error;
     }
 
     resetForm();
@@ -84,7 +86,9 @@ export default function MovimentacoesPage() {
 
   const handleDelete = async (id: string) => {
     if (confirm('Tem certeza que deseja excluir esta movimentação?')) {
-      await fetch(`/api/movimentacoes/${id}`, { method: 'DELETE' });
+      const supabase = getSupabaseBrowser();
+      const { error } = await supabase.from(TABLES.movimentacoes).delete().eq('id', id);
+      if (error) throw error;
       await loadData();
     }
   };

@@ -5,6 +5,10 @@ import Link from 'next/link';
 import { ArrowLeft, Plus, Edit, Trash2 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { NotaFiscal, Projeto } from '@/types';
+import { getSupabaseBrowser } from '@/lib/supabase/browser';
+import { TABLES } from '@/lib/db/tables';
+import { getTenantIdOrThrow } from '@/lib/tenant/getTenantId';
+import { mapNotaFiscalFromDb, mapNotaFiscalToDb, mapProjetoFromDb, type DbNotaFiscal, type DbProjeto } from '@/lib/db/mappers';
 
 export default function NotasFiscaisPage() {
   const [notas, setNotas] = useState<NotaFiscal[]>([]);
@@ -27,18 +31,21 @@ export default function NotasFiscaisPage() {
   }, []);
 
   const loadData = async () => {
-    const [notasRes, projetosRes] = await Promise.all([
-      fetch('/api/notas-fiscais', { cache: 'no-store' }),
-      fetch('/api/projetos', { cache: 'no-store' }),
+    const supabase = getSupabaseBrowser();
+    const [{ data: notasData, error: notasError }, { data: projetosData, error: projetosError }] = await Promise.all([
+      supabase.from(TABLES.notasFiscais).select('*').order('data_emissao', { ascending: false }),
+      supabase.from(TABLES.projetos).select('*').order('created_at', { ascending: false }),
     ]);
-    const notasJson = await notasRes.json();
-    const projetosJson = await projetosRes.json();
-    if (notasJson.ok) setNotas(notasJson.data);
-    if (projetosJson.ok) setProjetos(projetosJson.data);
+    if (notasError) throw notasError;
+    if (projetosError) throw projetosError;
+    setNotas(((notasData ?? []) as DbNotaFiscal[]).map(mapNotaFiscalFromDb));
+    setProjetos(((projetosData ?? []) as DbProjeto[]).map(mapProjetoFromDb));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const tenantId = await getTenantIdOrThrow();
+    const supabase = getSupabaseBrowser();
     const nota: NotaFiscal = {
       id: editingId || crypto.randomUUID(),
       numero: formData.numero,
@@ -52,18 +59,13 @@ export default function NotasFiscaisPage() {
       createdAt: new Date().toISOString(),
     };
 
+    const payload = { ...mapNotaFiscalToDb(nota), tenant_id: tenantId };
     if (editingId) {
-      await fetch(`/api/notas-fiscais/${editingId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(nota),
-      });
+      const { error } = await supabase.from(TABLES.notasFiscais).update(payload).eq('id', editingId);
+      if (error) throw error;
     } else {
-      await fetch('/api/notas-fiscais', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(nota),
-      });
+      const { error } = await supabase.from(TABLES.notasFiscais).insert(payload);
+      if (error) throw error;
     }
 
     resetForm();
@@ -87,7 +89,9 @@ export default function NotasFiscaisPage() {
 
   const handleDelete = async (id: string) => {
     if (confirm('Tem certeza que deseja excluir esta nota fiscal?')) {
-      await fetch(`/api/notas-fiscais/${id}`, { method: 'DELETE' });
+      const supabase = getSupabaseBrowser();
+      const { error } = await supabase.from(TABLES.notasFiscais).delete().eq('id', id);
+      if (error) throw error;
       await loadData();
     }
   };

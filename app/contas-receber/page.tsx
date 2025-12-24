@@ -5,6 +5,10 @@ import Link from 'next/link';
 import { ArrowLeft, Plus, Edit, Trash2, Check } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { ContaReceber, Projeto, StatusConta } from '@/types';
+import { getSupabaseBrowser } from '@/lib/supabase/browser';
+import { TABLES } from '@/lib/db/tables';
+import { getTenantIdOrThrow } from '@/lib/tenant/getTenantId';
+import { mapContaReceberFromDb, mapContaReceberToDb, mapProjetoFromDb, type DbContaReceber, type DbProjeto } from '@/lib/db/mappers';
 
 export default function ContasReceberPage() {
   const [contas, setContas] = useState<ContaReceber[]>([]);
@@ -26,18 +30,21 @@ export default function ContasReceberPage() {
   }, []);
 
   const loadData = async () => {
-    const [contasRes, projetosRes] = await Promise.all([
-      fetch('/api/contas-receber', { cache: 'no-store' }),
-      fetch('/api/projetos', { cache: 'no-store' }),
+    const supabase = getSupabaseBrowser();
+    const [{ data: contasData, error: contasError }, { data: projetosData, error: projetosError }] = await Promise.all([
+      supabase.from(TABLES.contasReceber).select('*').order('data_vencimento', { ascending: true }),
+      supabase.from(TABLES.projetos).select('*').order('created_at', { ascending: false }),
     ]);
-    const contasJson = await contasRes.json();
-    const projetosJson = await projetosRes.json();
-    if (contasJson.ok) setContas(contasJson.data);
-    if (projetosJson.ok) setProjetos(projetosJson.data);
+    if (contasError) throw contasError;
+    if (projetosError) throw projetosError;
+    setContas(((contasData ?? []) as DbContaReceber[]).map(mapContaReceberFromDb));
+    setProjetos(((projetosData ?? []) as DbProjeto[]).map(mapProjetoFromDb));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const tenantId = await getTenantIdOrThrow();
+    const supabase = getSupabaseBrowser();
     const existing = editingId ? contas.find(c => c.id === editingId) : undefined;
     const conta: ContaReceber = {
       id: editingId || crypto.randomUUID(),
@@ -53,18 +60,13 @@ export default function ContasReceberPage() {
       createdAt: new Date().toISOString(),
     };
 
+    const payload = { ...mapContaReceberToDb(conta), tenant_id: tenantId };
     if (editingId) {
-      await fetch(`/api/contas-receber/${editingId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(conta),
-      });
+      const { error } = await supabase.from(TABLES.contasReceber).update(payload).eq('id', editingId);
+      if (error) throw error;
     } else {
-      await fetch('/api/contas-receber', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(conta),
-      });
+      const { error } = await supabase.from(TABLES.contasReceber).insert(payload);
+      if (error) throw error;
     }
 
     resetForm();
@@ -87,7 +89,9 @@ export default function ContasReceberPage() {
 
   const handleDelete = async (id: string) => {
     if (confirm('Tem certeza que deseja excluir esta conta?')) {
-      await fetch(`/api/contas-receber/${id}`, { method: 'DELETE' });
+      const supabase = getSupabaseBrowser();
+      const { error } = await supabase.from(TABLES.contasReceber).delete().eq('id', id);
+      if (error) throw error;
       await loadData();
     }
   };
@@ -100,11 +104,11 @@ export default function ContasReceberPage() {
         status: 'recebida',
         dataRecebimento: new Date().toISOString().split('T')[0],
       };
-      await fetch(`/api/contas-receber/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updated),
-      });
+      const tenantId = await getTenantIdOrThrow();
+      const supabase = getSupabaseBrowser();
+      const payload = { ...mapContaReceberToDb(updated), tenant_id: tenantId };
+      const { error } = await supabase.from(TABLES.contasReceber).update(payload).eq('id', id);
+      if (error) throw error;
       await loadData();
     }
   };

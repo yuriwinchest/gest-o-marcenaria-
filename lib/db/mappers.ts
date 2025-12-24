@@ -2,6 +2,7 @@ import type { ContaPagar, ContaReceber, Movimentacao, NotaFiscal, Projeto } from
 
 export type DbProjeto = {
   id: string;
+  tenant_id?: string | null;
   nome: string;
   descricao: string | null;
   data_inicio: string;
@@ -36,6 +37,7 @@ export function mapProjetoToDb(p: Partial<Projeto>): Partial<DbProjeto> {
 
 export type DbMovimentacao = {
   id: string;
+  tenant_id?: string | null;
   tipo: 'entrada' | 'saida';
   descricao: string;
   valor: number;
@@ -75,6 +77,7 @@ export function mapMovimentacaoToDb(m: Partial<Movimentacao>): Partial<DbMovimen
 
 export type DbContaPagar = {
   id: string;
+  tenant_id?: string | null;
   descricao: string;
   valor: number;
   data_vencimento: string;
@@ -120,6 +123,7 @@ export function mapContaPagarToDb(c: Partial<ContaPagar>): Partial<DbContaPagar>
 
 export type DbContaReceber = {
   id: string;
+  tenant_id?: string | null;
   descricao: string;
   valor: number;
   data_vencimento: string;
@@ -165,6 +169,7 @@ export function mapContaReceberToDb(c: Partial<ContaReceber>): Partial<DbContaRe
 
 export type DbNotaFiscal = {
   id: string;
+  tenant_id?: string | null;
   numero: string;
   serie: string | null;
   tipo: 'entrada' | 'saida';

@@ -7,6 +7,9 @@ import { formatCurrency, calculateFluxoCaixa, calculateDRE, calculateProjetoLucr
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale/pt-BR';
 import type { ContaPagar, ContaReceber, Movimentacao, Projeto } from '@/types';
+import { getSupabaseBrowser } from '@/lib/supabase/browser';
+import { TABLES } from '@/lib/db/tables';
+import { mapContaPagarFromDb, mapContaReceberFromDb, mapMovimentacaoFromDb, mapProjetoFromDb, type DbContaPagar, type DbContaReceber, type DbMovimentacao, type DbProjeto } from '@/lib/db/mappers';
 
 export default function RelatoriosPage() {
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
@@ -19,25 +22,32 @@ export default function RelatoriosPage() {
 
   useEffect(() => {
     const loadData = async () => {
-      const [mRes, cpRes, crRes, pRes] = await Promise.all([
-        fetch('/api/movimentacoes', { cache: 'no-store' }),
-        fetch('/api/contas-pagar', { cache: 'no-store' }),
-        fetch('/api/contas-receber', { cache: 'no-store' }),
-        fetch('/api/projetos', { cache: 'no-store' }),
+      const supabase = getSupabaseBrowser();
+
+      const monthDate = new Date(selectedMonth + '-01');
+      const { start, end } = getMonthRange(monthDate);
+      const startStr = format(start, 'yyyy-MM-dd');
+      const endStr = format(end, 'yyyy-MM-dd');
+
+      const [mQ, cpQ, crQ, pQ] = await Promise.all([
+        supabase.from(TABLES.movimentacoes).select('*').gte('data', startStr).lte('data', endStr),
+        supabase.from(TABLES.contasPagar).select('*').gte('data_vencimento', startStr).lte('data_vencimento', endStr),
+        supabase.from(TABLES.contasReceber).select('*').gte('data_vencimento', startStr).lte('data_vencimento', endStr),
+        supabase.from(TABLES.projetos).select('*').order('created_at', { ascending: false }),
       ]);
-      const [mJson, cpJson, crJson, pJson] = await Promise.all([
-        mRes.json(),
-        cpRes.json(),
-        crRes.json(),
-        pRes.json(),
-      ]);
-      if (mJson.ok) setMovimentacoes(mJson.data);
-      if (cpJson.ok) setContasPagar(cpJson.data);
-      if (crJson.ok) setContasReceber(crJson.data);
-      if (pJson.ok) setProjetos(pJson.data);
+
+      if (mQ.error) throw mQ.error;
+      if (cpQ.error) throw cpQ.error;
+      if (crQ.error) throw crQ.error;
+      if (pQ.error) throw pQ.error;
+
+      setMovimentacoes(((mQ.data ?? []) as DbMovimentacao[]).map(mapMovimentacaoFromDb));
+      setContasPagar(((cpQ.data ?? []) as DbContaPagar[]).map(mapContaPagarFromDb));
+      setContasReceber(((crQ.data ?? []) as DbContaReceber[]).map(mapContaReceberFromDb));
+      setProjetos(((pQ.data ?? []) as DbProjeto[]).map(mapProjetoFromDb));
     };
     loadData();
-  }, []);
+  }, [selectedMonth]);
 
   const monthDate = new Date(selectedMonth + '-01');
   const monthRange = getMonthRange(monthDate);
@@ -45,10 +55,12 @@ export default function RelatoriosPage() {
   const fluxoCaixa = calculateFluxoCaixa(movimentacoes, contasPagar, contasReceber, monthRange.start, monthRange.end);
   const dre = calculateDRE(movimentacoes, contasPagar, contasReceber, monthRange.start, monthRange.end);
 
-  const projetosComLucro = projetos.map(projeto => {
-    const lucro = calculateProjetoLucro(projeto.id, movimentacoes, contasPagar, contasReceber);
-    return { ...projeto, ...lucro };
-  }).filter(p => p.receitas > 0 || p.despesas > 0);
+  const projetosComLucro = projetos
+    .map(projeto => {
+      const lucro = calculateProjetoLucro(projeto.id, movimentacoes, contasPagar, contasReceber);
+      return { ...projeto, ...lucro };
+    })
+    .filter(p => p.receitas > 0 || p.despesas > 0);
 
   const projetoSelecionado = selectedProjeto ? projetosComLucro.find(p => p.id === selectedProjeto) : null;
 

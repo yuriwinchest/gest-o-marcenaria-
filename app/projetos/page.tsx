@@ -5,6 +5,10 @@ import Link from 'next/link';
 import { ArrowLeft, Plus, Edit, Trash2 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { Projeto } from '@/types';
+import { getSupabaseBrowser } from '@/lib/supabase/browser';
+import { TABLES } from '@/lib/db/tables';
+import { getTenantIdOrThrow } from '@/lib/tenant/getTenantId';
+import { mapProjetoFromDb, mapProjetoToDb, type DbProjeto } from '@/lib/db/mappers';
 
 export default function ProjetosPage() {
   const [projetos, setProjetos] = useState<Projeto[]>([]);
@@ -23,13 +27,16 @@ export default function ProjetosPage() {
   }, []);
 
   const loadProjetos = async () => {
-    const res = await fetch('/api/projetos', { cache: 'no-store' });
-    const json = await res.json();
-    if (json.ok) setProjetos(json.data);
+    const supabase = getSupabaseBrowser();
+    const { data, error } = await supabase.from(TABLES.projetos).select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    setProjetos(((data ?? []) as DbProjeto[]).map(mapProjetoFromDb));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const tenantId = await getTenantIdOrThrow();
+    const supabase = getSupabaseBrowser();
     const projeto: Projeto = {
       id: editingId || crypto.randomUUID(),
       nome: formData.nome,
@@ -40,18 +47,13 @@ export default function ProjetosPage() {
       createdAt: new Date().toISOString(),
     };
 
+    const payload = { ...mapProjetoToDb(projeto), tenant_id: tenantId };
     if (editingId) {
-      await fetch(`/api/projetos/${editingId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(projeto),
-      });
+      const { error } = await supabase.from(TABLES.projetos).update(payload).eq('id', editingId);
+      if (error) throw error;
     } else {
-      await fetch('/api/projetos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(projeto),
-      });
+      const { error } = await supabase.from(TABLES.projetos).insert(payload);
+      if (error) throw error;
     }
 
     resetForm();
@@ -72,7 +74,9 @@ export default function ProjetosPage() {
 
   const handleDelete = async (id: string) => {
     if (confirm('Tem certeza que deseja excluir este projeto?')) {
-      await fetch(`/api/projetos/${id}`, { method: 'DELETE' });
+      const supabase = getSupabaseBrowser();
+      const { error } = await supabase.from(TABLES.projetos).delete().eq('id', id);
+      if (error) throw error;
       await loadProjetos();
     }
   };
