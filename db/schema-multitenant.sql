@@ -347,6 +347,29 @@ using (user_id = auth.uid())
 with check (user_id = auth.uid());
 
 -- ==========================================================
+-- 3.2) Rate limit de cadastro (anti-abuso)
+-- ==========================================================
+create table if not exists public."gestao_marcenaria__rate_limit_signup" (
+  id bigserial primary key,
+  ip_hash text not null,
+  window_start timestamptz not null,
+  count int not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (ip_hash, window_start)
+);
+
+comment on table public."gestao_marcenaria__rate_limit_signup" is 'Gestão de Marcenaria - Rate limit para endpoint de cadastro';
+
+drop trigger if exists gm_set_updated_at_rate_limit_signup on public."gestao_marcenaria__rate_limit_signup";
+create trigger gm_set_updated_at_rate_limit_signup
+before update on public."gestao_marcenaria__rate_limit_signup"
+for each row execute function public.gestao_marcenaria_set_updated_at();
+
+create index if not exists idx_gm_rl_signup_window
+  on public."gestao_marcenaria__rate_limit_signup"(window_start desc);
+
+-- ==========================================================
 -- 5) Migração de dados existentes (opcional)
 -- ==========================================================
 -- Se você já tem dados nas tabelas antigas, crie um tenant "Padrão" e atribua:
