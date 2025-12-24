@@ -1,14 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 
-function requiredPublicEnv(name: string): string {
-  const v = process.env[name];
-  if (!v) throw new Error(`Missing env var: ${name}`);
-  return v;
-}
-
 export function getSupabaseBrowser() {
-  const url = requiredPublicEnv('NEXT_PUBLIC_SUPABASE_URL');
-  const anon = requiredPublicEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY');
+  // IMPORTANTE: em Client Components, o Next.js só injeta env vars quando a chave é acessada diretamente.
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url) throw new Error('Missing env var: NEXT_PUBLIC_SUPABASE_URL');
+  if (!anon) throw new Error('Missing env var: NEXT_PUBLIC_SUPABASE_ANON_KEY');
   return createClient(url, anon, {
     auth: {
       persistSession: true,
