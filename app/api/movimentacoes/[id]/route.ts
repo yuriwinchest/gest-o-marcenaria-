@@ -4,26 +4,34 @@ import { mapMovimentacaoFromDb, mapMovimentacaoToDb, type DbMovimentacao } from 
 import { jsonError, jsonOk } from '../../_utils';
 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
-  const supabase = getSupabaseAdmin();
-  const body = await req.json();
-  const payload = mapMovimentacaoToDb(body);
+  try {
+    const supabase = getSupabaseAdmin();
+    const body = await req.json();
+    const payload = mapMovimentacaoToDb(body);
 
-  const { data, error } = await supabase
-    .from(TABLES.movimentacoes)
-    .update(payload)
-    .eq('id', params.id)
-    .select('*')
-    .single();
+    const { data, error } = await supabase
+      .from(TABLES.movimentacoes)
+      .update(payload)
+      .eq('id', params.id)
+      .select('*')
+      .single();
 
-  if (error) return jsonError(error.message, 500);
-  return jsonOk(mapMovimentacaoFromDb(data as DbMovimentacao));
+    if (error) return jsonError(error.message, 500);
+    return jsonOk(mapMovimentacaoFromDb(data as DbMovimentacao));
+  } catch (e: any) {
+    return jsonError(e?.message ?? 'Erro inesperado', 500);
+  }
 }
 
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
-  const supabase = getSupabaseAdmin();
-  const { error } = await supabase.from(TABLES.movimentacoes).delete().eq('id', params.id);
-  if (error) return jsonError(error.message, 500);
-  return jsonOk({ id: params.id });
+  try {
+    const supabase = getSupabaseAdmin();
+    const { error } = await supabase.from(TABLES.movimentacoes).delete().eq('id', params.id);
+    if (error) return jsonError(error.message, 500);
+    return jsonOk({ id: params.id });
+  } catch (e: any) {
+    return jsonError(e?.message ?? 'Erro inesperado', 500);
+  }
 }
 
 

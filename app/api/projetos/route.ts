@@ -4,29 +4,37 @@ import { mapProjetoFromDb, mapProjetoToDb, type DbProjeto } from '@/lib/db/mappe
 import { jsonError, jsonOk } from '../_utils';
 
 export async function GET() {
-  const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from(TABLES.projetos)
-    .select('*')
-    .order('created_at', { ascending: false });
+  try {
+    const supabase = getSupabaseAdmin();
+    const { data, error } = await supabase
+      .from(TABLES.projetos)
+      .select('*')
+      .order('created_at', { ascending: false });
 
-  if (error) return jsonError(error.message, 500);
-  return jsonOk((data as DbProjeto[]).map(mapProjetoFromDb));
+    if (error) return jsonError(error.message, 500);
+    return jsonOk((data as DbProjeto[]).map(mapProjetoFromDb));
+  } catch (e: any) {
+    return jsonError(e?.message ?? 'Erro inesperado', 500);
+  }
 }
 
 export async function POST(req: Request) {
-  const supabase = getSupabaseAdmin();
-  const body = await req.json();
+  try {
+    const supabase = getSupabaseAdmin();
+    const body = await req.json();
 
-  const payload = mapProjetoToDb(body);
-  const { data, error } = await supabase
-    .from(TABLES.projetos)
-    .insert(payload)
-    .select('*')
-    .single();
+    const payload = mapProjetoToDb(body);
+    const { data, error } = await supabase
+      .from(TABLES.projetos)
+      .insert(payload)
+      .select('*')
+      .single();
 
-  if (error) return jsonError(error.message, 500);
-  return jsonOk(mapProjetoFromDb(data as DbProjeto), { status: 201 });
+    if (error) return jsonError(error.message, 500);
+    return jsonOk(mapProjetoFromDb(data as DbProjeto), { status: 201 });
+  } catch (e: any) {
+    return jsonError(e?.message ?? 'Erro inesperado', 500);
+  }
 }
 
 

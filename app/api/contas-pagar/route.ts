@@ -4,25 +4,33 @@ import { mapContaPagarFromDb, mapContaPagarToDb, type DbContaPagar } from '@/lib
 import { jsonError, jsonOk } from '../_utils';
 
 export async function GET() {
-  const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from(TABLES.contasPagar)
-    .select('*')
-    .order('data_vencimento', { ascending: true });
+  try {
+    const supabase = getSupabaseAdmin();
+    const { data, error } = await supabase
+      .from(TABLES.contasPagar)
+      .select('*')
+      .order('data_vencimento', { ascending: true });
 
-  if (error) return jsonError(error.message, 500);
-  return jsonOk((data as DbContaPagar[]).map(mapContaPagarFromDb));
+    if (error) return jsonError(error.message, 500);
+    return jsonOk((data as DbContaPagar[]).map(mapContaPagarFromDb));
+  } catch (e: any) {
+    return jsonError(e?.message ?? 'Erro inesperado', 500);
+  }
 }
 
 export async function POST(req: Request) {
-  const supabase = getSupabaseAdmin();
-  const body = await req.json();
-  const payload = mapContaPagarToDb(body);
+  try {
+    const supabase = getSupabaseAdmin();
+    const body = await req.json();
+    const payload = mapContaPagarToDb(body);
 
-  const { data, error } = await supabase.from(TABLES.contasPagar).insert(payload).select('*').single();
-  if (error) return jsonError(error.message, 500);
+    const { data, error } = await supabase.from(TABLES.contasPagar).insert(payload).select('*').single();
+    if (error) return jsonError(error.message, 500);
 
-  return jsonOk(mapContaPagarFromDb(data as DbContaPagar), { status: 201 });
+    return jsonOk(mapContaPagarFromDb(data as DbContaPagar), { status: 201 });
+  } catch (e: any) {
+    return jsonError(e?.message ?? 'Erro inesperado', 500);
+  }
 }
 
 

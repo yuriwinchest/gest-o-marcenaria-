@@ -4,28 +4,36 @@ import { mapProjetoFromDb, mapProjetoToDb, type DbProjeto } from '@/lib/db/mappe
 import { jsonError, jsonOk } from '../../_utils';
 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
-  const supabase = getSupabaseAdmin();
-  const body = await req.json();
-  const payload = mapProjetoToDb(body);
+  try {
+    const supabase = getSupabaseAdmin();
+    const body = await req.json();
+    const payload = mapProjetoToDb(body);
 
-  const { data, error } = await supabase
-    .from(TABLES.projetos)
-    .update(payload)
-    .eq('id', params.id)
-    .select('*')
-    .single();
+    const { data, error } = await supabase
+      .from(TABLES.projetos)
+      .update(payload)
+      .eq('id', params.id)
+      .select('*')
+      .single();
 
-  if (error) return jsonError(error.message, 500);
-  return jsonOk(mapProjetoFromDb(data as DbProjeto));
+    if (error) return jsonError(error.message, 500);
+    return jsonOk(mapProjetoFromDb(data as DbProjeto));
+  } catch (e: any) {
+    return jsonError(e?.message ?? 'Erro inesperado', 500);
+  }
 }
 
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
-  const supabase = getSupabaseAdmin();
+  try {
+    const supabase = getSupabaseAdmin();
 
-  const { error } = await supabase.from(TABLES.projetos).delete().eq('id', params.id);
-  if (error) return jsonError(error.message, 500);
+    const { error } = await supabase.from(TABLES.projetos).delete().eq('id', params.id);
+    if (error) return jsonError(error.message, 500);
 
-  return jsonOk({ id: params.id });
+    return jsonOk({ id: params.id });
+  } catch (e: any) {
+    return jsonError(e?.message ?? 'Erro inesperado', 500);
+  }
 }
 
 

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ArrowLeft, Plus, Edit, Trash2 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Movimentacao, Projeto, TipoMovimentacao } from '@/types';
+import { fetchJson } from '@/lib/api/fetchJson';
 
 export default function MovimentacoesPage() {
   const [movimentacoes, setMovimentacoes] = useState<Movimentacao[]>([]);
@@ -26,14 +27,13 @@ export default function MovimentacoesPage() {
   }, []);
 
   const loadData = async () => {
-    const [movRes, projRes] = await Promise.all([
-      fetch('/api/movimentacoes', { cache: 'no-store' }),
-      fetch('/api/projetos', { cache: 'no-store' }),
+    const [mov, proj] = await Promise.all([
+      fetchJson<Movimentacao[]>('/api/movimentacoes', { cache: 'no-store' }),
+      fetchJson<Projeto[]>('/api/projetos', { cache: 'no-store' }),
     ]);
-    const movJson = await movRes.json();
-    const projJson = await projRes.json();
-    if (movJson.ok) setMovimentacoes(movJson.data);
-    if (projJson.ok) setProjetos(projJson.data);
+
+    if (mov.body?.ok) setMovimentacoes(mov.body.data);
+    if (proj.body?.ok) setProjetos(proj.body.data);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

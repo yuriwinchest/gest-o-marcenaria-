@@ -4,29 +4,37 @@ import { mapMovimentacaoFromDb, mapMovimentacaoToDb, type DbMovimentacao } from 
 import { jsonError, jsonOk } from '../_utils';
 
 export async function GET() {
-  const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from(TABLES.movimentacoes)
-    .select('*')
-    .order('data', { ascending: false });
+  try {
+    const supabase = getSupabaseAdmin();
+    const { data, error } = await supabase
+      .from(TABLES.movimentacoes)
+      .select('*')
+      .order('data', { ascending: false });
 
-  if (error) return jsonError(error.message, 500);
-  return jsonOk((data as DbMovimentacao[]).map(mapMovimentacaoFromDb));
+    if (error) return jsonError(error.message, 500);
+    return jsonOk((data as DbMovimentacao[]).map(mapMovimentacaoFromDb));
+  } catch (e: any) {
+    return jsonError(e?.message ?? 'Erro inesperado', 500);
+  }
 }
 
 export async function POST(req: Request) {
-  const supabase = getSupabaseAdmin();
-  const body = await req.json();
-  const payload = mapMovimentacaoToDb(body);
+  try {
+    const supabase = getSupabaseAdmin();
+    const body = await req.json();
+    const payload = mapMovimentacaoToDb(body);
 
-  const { data, error } = await supabase
-    .from(TABLES.movimentacoes)
-    .insert(payload)
-    .select('*')
-    .single();
+    const { data, error } = await supabase
+      .from(TABLES.movimentacoes)
+      .insert(payload)
+      .select('*')
+      .single();
 
-  if (error) return jsonError(error.message, 500);
-  return jsonOk(mapMovimentacaoFromDb(data as DbMovimentacao), { status: 201 });
+    if (error) return jsonError(error.message, 500);
+    return jsonOk(mapMovimentacaoFromDb(data as DbMovimentacao), { status: 201 });
+  } catch (e: any) {
+    return jsonError(e?.message ?? 'Erro inesperado', 500);
+  }
 }
 
 
