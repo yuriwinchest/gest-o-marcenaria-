@@ -188,6 +188,34 @@ alter table public."gestao_marcenaria__notas_fiscais" enable row level security;
 alter table public."gestao_marcenaria__clientes" enable row level security;
 alter table public."gestao_marcenaria__usuarios" enable row level security;
 
+-- ==========================================================
+-- 4.1) Privilégios (GRANT/REVOKE) - evita acesso indevido
+-- ==========================================================
+-- Por padrão, revogamos do PUBLIC e liberamos somente para authenticated.
+revoke all on table
+  public."gestao_marcenaria__tenants",
+  public."gestao_marcenaria__tenant_membros",
+  public."gestao_marcenaria__projetos_obras",
+  public."gestao_marcenaria__movimentacoes_financeiras",
+  public."gestao_marcenaria__contas_a_pagar",
+  public."gestao_marcenaria__contas_a_receber",
+  public."gestao_marcenaria__notas_fiscais",
+  public."gestao_marcenaria__clientes",
+  public."gestao_marcenaria__usuarios"
+from public;
+
+grant select, insert, update, delete on table
+  public."gestao_marcenaria__tenants",
+  public."gestao_marcenaria__tenant_membros",
+  public."gestao_marcenaria__projetos_obras",
+  public."gestao_marcenaria__movimentacoes_financeiras",
+  public."gestao_marcenaria__contas_a_pagar",
+  public."gestao_marcenaria__contas_a_receber",
+  public."gestao_marcenaria__notas_fiscais",
+  public."gestao_marcenaria__clientes",
+  public."gestao_marcenaria__usuarios"
+to authenticated;
+
 -- TENANTS: só enxerga tenants em que é membro
 drop policy if exists gm_tenants_select on public."gestao_marcenaria__tenants";
 create policy gm_tenants_select
