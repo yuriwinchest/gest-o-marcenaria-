@@ -53,16 +53,16 @@ export default function RelatoriosPage() {
   const projetoSelecionado = selectedProjeto ? projetosComLucro.find(p => p.id === selectedProjeto) : null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm">
+    <div className="min-h-screen">
+      <header className="gm-surface">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center space-x-4">
-            <Link href="/" className="text-gray-600 hover:text-gray-900">
+            <Link href="/" className="gm-text-muted hover:text-white">
               <ArrowLeft className="w-6 h-6" />
             </Link>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Relatórios Financeiros</h1>
-              <p className="mt-1 text-gray-600">Análise financeira e relatórios consolidados</p>
+              <h1 className="text-3xl font-bold">Relatórios Financeiros</h1>
+              <p className="mt-1 gm-text-muted">Análise financeira e relatórios consolidados</p>
             </div>
           </div>
         </div>
@@ -70,24 +70,24 @@ export default function RelatoriosPage() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {/* Filtros */}
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="gm-surface rounded-lg p-6">
           <h2 className="text-lg font-semibold mb-4">Filtros</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Mês</label>
+              <label className="block text-sm font-medium gm-text-muted mb-1">Mês</label>
               <input
                 type="month"
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                className="w-full rounded-lg px-3 py-2 gm-input"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Projeto (para relatório detalhado)</label>
+              <label className="block text-sm font-medium gm-text-muted mb-1">Projeto (para relatório detalhado)</label>
               <select
                 value={selectedProjeto}
                 onChange={(e) => setSelectedProjeto(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                className="w-full rounded-lg px-3 py-2 gm-select"
               >
                 <option value="">Todos os projetos</option>
                 {projetos.map((p) => (
@@ -99,7 +99,7 @@ export default function RelatoriosPage() {
         </div>
 
         {/* Resumo Mensal */}
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="gm-surface rounded-lg p-6">
           <h2 className="text-xl font-semibold mb-4 flex items-center space-x-2">
             <FileText className="w-6 h-6" />
             <span>Resumo Mensal - {format(monthDate, 'MMMM yyyy', { locale: ptBR })}</span>
@@ -132,7 +132,7 @@ export default function RelatoriosPage() {
         </div>
 
         {/* Fluxo de Caixa */}
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="gm-surface rounded-lg p-6">
           <h2 className="text-xl font-semibold mb-4">Fluxo de Caixa</h2>
           <div className="space-y-4">
             <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
@@ -153,7 +153,7 @@ export default function RelatoriosPage() {
         </div>
 
         {/* DRE - Demonstração do Resultado do Exercício */}
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="gm-surface rounded-lg p-6">
           <h2 className="text-xl font-semibold mb-4">DRE - Demonstração do Resultado do Exercício</h2>
           <div className="space-y-4">
             <div className="flex justify-between items-center p-4 bg-green-50 rounded-lg">
@@ -180,7 +180,7 @@ export default function RelatoriosPage() {
         </div>
 
         {/* Lucro por Projeto */}
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="gm-surface rounded-lg p-6">
           <h2 className="text-xl font-semibold mb-4">Lucro e Despesas por Projeto</h2>
           {projetosComLucro.length === 0 ? (
             <p className="text-gray-500 text-center py-4">Nenhum projeto com movimentações financeiras</p>
@@ -231,7 +231,7 @@ export default function RelatoriosPage() {
 
         {/* Relatório Detalhado por Projeto */}
         {projetoSelecionado && (
-          <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="gm-surface rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-4">Relatório Detalhado - {projetoSelecionado.nome}</h2>
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -50,11 +50,11 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm">
+    <div className="min-h-screen">
+      <header className="gm-surface">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <h1 className="text-3xl font-bold text-gray-900">Gestão de Marcenaria</h1>
-          <p className="mt-2 text-gray-600">Sistema de gestão financeira completo</p>
+          <h1 className="text-3xl font-bold">Gestão de Marcenaria</h1>
+          <p className="mt-2 gm-text-muted">Sistema de gestão financeira completo</p>
         </div>
       </header>
 
@@ -66,15 +66,15 @@ export default function Home() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 group"
+                className="gm-surface rounded-lg transition-shadow p-6 group hover:shadow-2xl"
               >
                 <div className="flex items-start space-x-4">
                   <div className={`${item.color} p-3 rounded-lg text-white group-hover:scale-110 transition-transform`}>
                     <Icon className="w-6 h-6" />
                   </div>
                   <div className="flex-1">
-                    <h2 className="text-xl font-semibold text-gray-900 mb-1">{item.title}</h2>
-                    <p className="text-gray-600 text-sm">{item.description}</p>
+                    <h2 className="text-xl font-semibold mb-1">{item.title}</h2>
+                    <p className="gm-text-muted text-sm">{item.description}</p>
                   </div>
                 </div>
               </Link>

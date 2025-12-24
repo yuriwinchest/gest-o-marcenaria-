@@ -103,17 +103,17 @@ export default function ProjetosPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm">
+    <div className="min-h-screen">
+      <header className="gm-surface">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Link href="/" className="text-gray-600 hover:text-gray-900">
+              <Link href="/" className="gm-text-muted hover:text-white">
                 <ArrowLeft className="w-6 h-6" />
               </Link>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">Projetos / Obras</h1>
-                <p className="mt-1 text-gray-600">Gerenciar projetos e obras</p>
+                <h1 className="text-3xl font-bold">Projetos / Obras</h1>
+                <p className="mt-1 gm-text-muted">Gerenciar projetos e obras</p>
               </div>
             </div>
             <button
@@ -129,28 +129,28 @@ export default function ProjetosPage() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {showForm && (
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <div className="gm-surface rounded-lg p-6 mb-6">
             <h2 className="text-xl font-semibold mb-4">
               {editingId ? 'Editar Projeto' : 'Novo Projeto'}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Projeto</label>
+                  <label className="block text-sm font-medium gm-text-muted mb-1">Nome do Projeto</label>
                   <input
                     type="text"
                     value={formData.nome}
                     onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    className="w-full rounded-lg px-3 py-2 gm-input"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                  <label className="block text-sm font-medium gm-text-muted mb-1">Status</label>
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    className="w-full rounded-lg px-3 py-2 gm-select"
                     required
                   >
                     <option value="ativo">Ativo</option>
@@ -159,30 +159,30 @@ export default function ProjetosPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Data de Início</label>
+                  <label className="block text-sm font-medium gm-text-muted mb-1">Data de Início</label>
                   <input
                     type="date"
                     value={formData.dataInicio}
                     onChange={(e) => setFormData({ ...formData, dataInicio: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    className="w-full rounded-lg px-3 py-2 gm-input"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Data de Fim (opcional)</label>
+                  <label className="block text-sm font-medium gm-text-muted mb-1">Data de Fim (opcional)</label>
                   <input
                     type="date"
                     value={formData.dataFim}
                     onChange={(e) => setFormData({ ...formData, dataFim: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    className="w-full rounded-lg px-3 py-2 gm-input"
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                  <label className="block text-sm font-medium gm-text-muted mb-1">Descrição</label>
                   <textarea
                     value={formData.descricao}
                     onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    className="w-full rounded-lg px-3 py-2 gm-textarea"
                     rows={3}
                   />
                 </div>
@@ -197,7 +197,7 @@ export default function ProjetosPage() {
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400"
+                  className="bg-white/10 text-white px-6 py-2 rounded-lg hover:bg-white/15 border border-white/10"
                 >
                   Cancelar
                 </button>
@@ -208,27 +208,27 @@ export default function ProjetosPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projetos.length === 0 ? (
-            <div className="col-span-full text-center text-gray-500 py-8">
+            <div className="col-span-full text-center gm-text-muted py-8">
               Nenhum projeto cadastrado
             </div>
           ) : (
             projetos.map((projeto) => (
-              <div key={projeto.id} className="bg-white rounded-lg shadow-md p-6">
+              <div key={projeto.id} className="gm-surface rounded-lg p-6">
                 <div className="flex items-start justify-between mb-4">
-                  <h3 className="text-xl font-semibold text-gray-900">{projeto.nome}</h3>
+                  <h3 className="text-xl font-semibold">{projeto.nome}</h3>
                   <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(projeto.status)}`}>
                     {projeto.status === 'ativo' ? 'Ativo' : projeto.status === 'concluido' ? 'Concluído' : 'Cancelado'}
                   </span>
                 </div>
                 {projeto.descricao && (
-                  <p className="text-gray-600 text-sm mb-4">{projeto.descricao}</p>
+                  <p className="gm-text-muted text-sm mb-4">{projeto.descricao}</p>
                 )}
                 <div className="space-y-2 mb-4">
-                  <div className="text-sm text-gray-500">
+                  <div className="text-sm gm-text-muted">
                     <span className="font-medium">Início:</span> {formatDate(projeto.dataInicio)}
                   </div>
                   {projeto.dataFim && (
-                    <div className="text-sm text-gray-500">
+                    <div className="text-sm gm-text-muted">
                       <span className="font-medium">Fim:</span> {formatDate(projeto.dataFim)}
                     </div>
                   )}

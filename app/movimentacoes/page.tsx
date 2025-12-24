@@ -104,17 +104,17 @@ export default function MovimentacoesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm">
+    <div className="min-h-screen">
+      <header className="gm-surface">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Link href="/" className="text-gray-600 hover:text-gray-900">
+              <Link href="/" className="gm-text-muted hover:text-white">
                 <ArrowLeft className="w-6 h-6" />
               </Link>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">Movimentações Financeiras</h1>
-                <p className="mt-1 text-gray-600">Lançamento de entradas e saídas</p>
+                <h1 className="text-3xl font-bold">Movimentações Financeiras</h1>
+                <p className="mt-1 gm-text-muted">Lançamento de entradas e saídas</p>
               </div>
             </div>
             <button
@@ -130,18 +130,18 @@ export default function MovimentacoesPage() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {showForm && (
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <div className="gm-surface rounded-lg p-6 mb-6">
             <h2 className="text-xl font-semibold mb-4">
               {editingId ? 'Editar Movimentação' : 'Nova Movimentação'}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                  <label className="block text-sm font-medium gm-text-muted mb-1">Tipo</label>
                   <select
                     value={formData.tipo}
                     onChange={(e) => setFormData({ ...formData, tipo: e.target.value as TipoMovimentacao })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    className="w-full rounded-lg px-3 py-2 gm-select"
                     required
                   >
                     <option value="entrada">Entrada</option>
@@ -149,52 +149,52 @@ export default function MovimentacoesPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Data</label>
+                  <label className="block text-sm font-medium gm-text-muted mb-1">Data</label>
                   <input
                     type="date"
                     value={formData.data}
                     onChange={(e) => setFormData({ ...formData, data: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    className="w-full rounded-lg px-3 py-2 gm-input"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                  <label className="block text-sm font-medium gm-text-muted mb-1">Descrição</label>
                   <input
                     type="text"
                     value={formData.descricao}
                     onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    className="w-full rounded-lg px-3 py-2 gm-input"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Valor</label>
+                  <label className="block text-sm font-medium gm-text-muted mb-1">Valor</label>
                   <input
                     type="number"
                     step="0.01"
                     value={formData.valor}
                     onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    className="w-full rounded-lg px-3 py-2 gm-input"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
+                  <label className="block text-sm font-medium gm-text-muted mb-1">Categoria</label>
                   <input
                     type="text"
                     value={formData.categoria}
                     onChange={(e) => setFormData({ ...formData, categoria: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    className="w-full rounded-lg px-3 py-2 gm-input"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Projeto (opcional)</label>
+                  <label className="block text-sm font-medium gm-text-muted mb-1">Projeto (opcional)</label>
                   <select
                     value={formData.projetoId}
                     onChange={(e) => setFormData({ ...formData, projetoId: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    className="w-full rounded-lg px-3 py-2 gm-select"
                   >
                     <option value="">Nenhum</option>
                     {projetos.map((p) => (
@@ -203,11 +203,11 @@ export default function MovimentacoesPage() {
                   </select>
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Observações</label>
+                  <label className="block text-sm font-medium gm-text-muted mb-1">Observações</label>
                   <textarea
                     value={formData.observacoes}
                     onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    className="w-full rounded-lg px-3 py-2 gm-textarea"
                     rows={3}
                   />
                 </div>
@@ -222,7 +222,7 @@ export default function MovimentacoesPage() {
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400"
+                  className="bg-white/10 text-white px-6 py-2 rounded-lg hover:bg-white/15 border border-white/10"
                 >
                   Cancelar
                 </button>
@@ -231,31 +231,31 @@ export default function MovimentacoesPage() {
           </div>
         )}
 
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="gm-surface rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-white/10 gm-table">
+              <thead>
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descrição</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoria</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Projeto</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium gm-text-muted uppercase tracking-wider">Data</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium gm-text-muted uppercase tracking-wider">Tipo</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium gm-text-muted uppercase tracking-wider">Descrição</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium gm-text-muted uppercase tracking-wider">Categoria</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium gm-text-muted uppercase tracking-wider">Valor</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium gm-text-muted uppercase tracking-wider">Projeto</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium gm-text-muted uppercase tracking-wider">Ações</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="divide-y divide-white/10">
                 {movimentacoes.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
+                    <td colSpan={7} className="px-6 py-4 text-center gm-text-muted">
                       Nenhuma movimentação cadastrada
                     </td>
                   </tr>
                 ) : (
                   movimentacoes.map((mov) => (
-                    <tr key={mov.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatDate(mov.data)}</td>
+                    <tr key={mov.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">{formatDate(mov.data)}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 text-xs rounded-full ${
                           mov.tipo === 'entrada' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
@@ -263,27 +263,27 @@ export default function MovimentacoesPage() {
                           {mov.tipo === 'entrada' ? 'Entrada' : 'Saída'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">{mov.descricao}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{mov.categoria}</td>
+                      <td className="px-6 py-4 text-sm">{mov.descricao}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm gm-text-muted">{mov.categoria}</td>
                       <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
-                        mov.tipo === 'entrada' ? 'text-green-600' : 'text-red-600'
+                        mov.tipo === 'entrada' ? 'text-green-300' : 'text-red-300'
                       }`}>
                         {mov.tipo === 'entrada' ? '+' : '-'} {formatCurrency(mov.valor)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm gm-text-muted">
                         {mov.projetoId ? projetos.find(p => p.id === mov.projetoId)?.nome || '-' : '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex space-x-2">
                           <button
                             onClick={() => handleEdit(mov)}
-                            className="text-blue-600 hover:text-blue-900"
+                            className="text-blue-300 hover:text-blue-200"
                           >
                             <Edit className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(mov.id)}
-                            className="text-red-600 hover:text-red-900"
+                            className="text-red-300 hover:text-red-200"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>

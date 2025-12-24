@@ -3,21 +3,72 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: #0b0613;
+  --foreground: #f5f3ff;
+  --card: rgba(18, 10, 28, 0.78);
+  --card-border: rgba(255, 255, 255, 0.10);
+  --muted: rgba(245, 243, 255, 0.75);
+  --input: rgba(255, 255, 255, 0.08);
+  --input-border: rgba(255, 255, 255, 0.16);
+  --focus: rgba(168, 85, 247, 0.6); /* roxo */
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+}
+
+/* Fundo "madeira roxa" */
+.gm-bg {
+  min-height: 100vh;
+  background:
+    radial-gradient(1200px 800px at 20% 10%, rgba(168, 85, 247, 0.25), transparent 60%),
+    radial-gradient(900px 700px at 80% 0%, rgba(217, 70, 239, 0.18), transparent 55%),
+    radial-gradient(900px 700px at 50% 90%, rgba(124, 58, 237, 0.18), transparent 55%),
+    linear-gradient(180deg, rgba(66, 32, 102, 0.25), rgba(9, 5, 15, 0.85)),
+    repeating-linear-gradient(
+      105deg,
+      rgba(255, 255, 255, 0.03) 0px,
+      rgba(255, 255, 255, 0.03) 6px,
+      rgba(0, 0, 0, 0.08) 6px,
+      rgba(0, 0, 0, 0.08) 12px
+    );
+}
+
+/* Cards e superfícies */
+.gm-surface {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+}
+
+.gm-text-muted {
+  color: var(--muted);
+}
+
+/* Inputs */
+.gm-input, .gm-select, .gm-textarea {
+  background: var(--input);
+  border: 1px solid var(--input-border);
+  color: var(--foreground);
+}
+.gm-input::placeholder, .gm-textarea::placeholder {
+  color: rgba(245, 243, 255, 0.55);
+}
+.gm-input:focus, .gm-select:focus, .gm-textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--focus);
+  border-color: rgba(168, 85, 247, 0.75);
+}
+
+/* Tabelas */
+.gm-table thead {
+  background: rgba(255, 255, 255, 0.04);
+}
+.gm-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
 }
 
 @layer utilities {
