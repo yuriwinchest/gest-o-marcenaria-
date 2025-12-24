@@ -4,7 +4,7 @@
 
 Configure **no seu ambiente local** (ex: `.env.local`) e também na **Vercel** (Project → Settings → Environment Variables):
 
-- `SUPABASE_URL`
+- `SUPABASE_URL` (ou `NEXT_PUBLIC_SUPABASE_URL`)
 - `SUPABASE_SERVICE_ROLE_KEY` (**apenas servidor**; não usar com `NEXT_PUBLIC_`)
 
 Opcional (somente se você quiser usar Supabase direto no browser no futuro):
