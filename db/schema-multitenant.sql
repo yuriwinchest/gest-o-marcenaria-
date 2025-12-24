@@ -370,6 +370,138 @@ create index if not exists idx_gm_rl_signup_window
   on public."gestao_marcenaria__rate_limit_signup"(window_start desc);
 
 -- ==========================================================
+-- 3.3) Rate limit GLOBAL (automático) para escritas no banco
+-- ==========================================================
+-- Observação importante:
+-- - Este rate limit é aplicado em INSERT/UPDATE/DELETE (triggers).
+-- - SELECT (leitura) não dispara trigger; para leitura, use RLS + limites da plataforma.
+
+create table if not exists public."gestao_marcenaria__rate_limit_ops" (
+  actor_id uuid not null,
+  op_key text not null,
+  window_start timestamptz not null,
+  count int not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  primary key (actor_id, op_key, window_start)
+);
+
+comment on table public."gestao_marcenaria__rate_limit_ops" is 'Gestão de Marcenaria - Rate limit global (operações de escrita)';
+
+drop trigger if exists gm_set_updated_at_rate_limit_ops on public."gestao_marcenaria__rate_limit_ops";
+create trigger gm_set_updated_at_rate_limit_ops
+before update on public."gestao_marcenaria__rate_limit_ops"
+for each row execute function public.gestao_marcenaria_set_updated_at();
+
+create index if not exists idx_gm_rl_ops_window
+  on public."gestao_marcenaria__rate_limit_ops"(window_start desc);
+
+-- Função genérica de rate limit por usuário (auth.uid)
+create or replace function public.gestao_marcenaria_rate_limit_op(
+  p_op_key text,
+  p_max int,
+  p_window_sec int
+)
+returns void
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+declare
+  v_actor uuid;
+  v_window_start timestamptz;
+  v_current int;
+begin
+  v_actor := auth.uid();
+  if v_actor is null then
+    raise exception 'Usuário não autenticado';
+  end if;
+
+  v_window_start := to_timestamp(floor(extract(epoch from now()) / p_window_sec) * p_window_sec);
+
+  insert into public."gestao_marcenaria__rate_limit_ops"(actor_id, op_key, window_start, count)
+  values (v_actor, p_op_key, v_window_start, 0)
+  on conflict (actor_id, op_key, window_start) do nothing;
+
+  select count
+    into v_current
+  from public."gestao_marcenaria__rate_limit_ops"
+  where actor_id = v_actor
+    and op_key = p_op_key
+    and window_start = v_window_start;
+
+  if v_current >= p_max then
+    raise exception 'Rate limit excedido para % (máx % em %s)', p_op_key, p_max, p_window_sec;
+  end if;
+
+  update public."gestao_marcenaria__rate_limit_ops"
+  set count = v_current + 1
+  where actor_id = v_actor
+    and op_key = p_op_key
+    and window_start = v_window_start;
+end;
+$$;
+
+-- Trigger helper: define uma chave por tabela + operação
+create or replace function public.gestao_marcenaria_rate_limit_trigger()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+declare
+  v_op text;
+begin
+  -- Limites recomendados para baixo tráfego:
+  -- - Escritas: 60 por minuto por usuário
+  -- - Deletes: 20 por minuto por usuário
+  v_op := format('%s.%s', tg_table_name, lower(tg_op));
+
+  if tg_op = 'DELETE' then
+    perform public.gestao_marcenaria_rate_limit_op(v_op, 20, 60);
+  else
+    perform public.gestao_marcenaria_rate_limit_op(v_op, 60, 60);
+  end if;
+
+  if tg_op = 'DELETE' then
+    return old;
+  end if;
+  return new;
+end;
+$$;
+
+-- Aplica triggers nas tabelas principais do sistema
+drop trigger if exists gm_rl_projetos on public."gestao_marcenaria__projetos_obras";
+create trigger gm_rl_projetos
+before insert or update or delete on public."gestao_marcenaria__projetos_obras"
+for each row execute function public.gestao_marcenaria_rate_limit_trigger();
+
+drop trigger if exists gm_rl_movimentacoes on public."gestao_marcenaria__movimentacoes_financeiras";
+create trigger gm_rl_movimentacoes
+before insert or update or delete on public."gestao_marcenaria__movimentacoes_financeiras"
+for each row execute function public.gestao_marcenaria_rate_limit_trigger();
+
+drop trigger if exists gm_rl_contas_pagar on public."gestao_marcenaria__contas_a_pagar";
+create trigger gm_rl_contas_pagar
+before insert or update or delete on public."gestao_marcenaria__contas_a_pagar"
+for each row execute function public.gestao_marcenaria_rate_limit_trigger();
+
+drop trigger if exists gm_rl_contas_receber on public."gestao_marcenaria__contas_a_receber";
+create trigger gm_rl_contas_receber
+before insert or update or delete on public."gestao_marcenaria__contas_a_receber"
+for each row execute function public.gestao_marcenaria_rate_limit_trigger();
+
+drop trigger if exists gm_rl_notas_fiscais on public."gestao_marcenaria__notas_fiscais";
+create trigger gm_rl_notas_fiscais
+before insert or update or delete on public."gestao_marcenaria__notas_fiscais"
+for each row execute function public.gestao_marcenaria_rate_limit_trigger();
+
+drop trigger if exists gm_rl_clientes on public."gestao_marcenaria__clientes";
+create trigger gm_rl_clientes
+before insert or update or delete on public."gestao_marcenaria__clientes"
+for each row execute function public.gestao_marcenaria_rate_limit_trigger();
+
+-- ==========================================================
 -- 5) Migração de dados existentes (opcional)
 -- ==========================================================
 -- Se você já tem dados nas tabelas antigas, crie um tenant "Padrão" e atribua:
